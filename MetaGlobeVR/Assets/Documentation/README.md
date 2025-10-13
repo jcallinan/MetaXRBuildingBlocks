@@ -1,3 +1,60 @@
+# 🌍 MetaGlobe VR: Project Summary & Build Walkthrough
+
+This guide explains how to assemble the MetaGlobe VR sample scene using the Meta XR SDK. Because screenshots are not available in this repository, every task is described in text so you can reproduce the scene from an empty Unity hierarchy.
+
+## 1. Step-by-Step Scene Assembly
+
+### Step 4 — Scene Setup (GameObjects & Components)
+1. **Remove the placeholder camera.** In the Hierarchy select `Main Camera`, press the Delete key, and confirm that the Hierarchy is now empty.
+2. **Add the VR rig supplied by the SDK.** Open the Unity menu **Oculus ▸ Tools ▸ OVRCameraRig**. A new `OVRCameraRig` appears in the Hierarchy containing `TrackingSpace`, `LeftHandAnchor`, `RightHandAnchor`, and `CenterEyeAnchor` children.
+3. **Create a world controller.** Right-click the Hierarchy background, choose **Create Empty**, and rename the new GameObject to `WorldController`. Reset its Transform (gear icon ▸ *Reset*) so that position, rotation, and scale read `0,0,0` / `0,0,0` / `1,1,1`.
+4. **Add the interactive globe.**
+   - Right-click `WorldController`, choose **3D Object ▸ Sphere**, and rename the sphere to `Globe`.
+   - With `Globe` selected, open the Inspector and click **Add Component ▸ Physics ▸ Sphere Collider** (already present by default—if so, leave it enabled).
+   - Add a **Rigidbody** component. Check **Is Kinematic** so the globe follows scripted motion but still exposes physics properties to the grab system.
+   - Click **Add Component ▸ Scripts ▸ GlobeRotator** and **Add Component ▸ Scripts ▸ PhysicsGrabber** so the sphere responds to rotation input and torque testing. In the `PhysicsGrabber` component, drag the `Globe` GameObject into the **Target Rigidbody** field.
+5. **Prepare POI markers.**
+   - Create a **3D Object ▸ Cylinder** in the Hierarchy root and rename it `POI_Marker`.
+   - Resize it to a slim pin (e.g., scale `0.1, 0.5, 0.1`) using the Transform in the Inspector.
+   - Right-click `POI_Marker`, choose **3D Object ▸ Text - TextMeshPro**, accept the TMP import prompt if shown, and rename the new text object to `POI_Label`. Set its text to a sample location name such as "Paris" and rotate it to face outward from the globe.
+   - Select the parent `POI_Marker` and click **Add Component ▸ Scripts ▸ POI Interaction**. This script provides a constant pulsing animation so POIs remain visible.
+6. **Create a prefab for reuse.** Drag the `POI_Marker` object from the Hierarchy into a folder such as `Assets/Prefabs`. Unity creates `POI_Marker.prefab`, which you can instantiate repeatedly.
+7. **Populate the globe with locations.** Delete the original `POI_Marker` from the Hierarchy (the prefab remains in the Project window). Drag at least five copies of the prefab into the scene, make them children of `Globe`, and position each marker on the surface with unique names such as `Paris_POI`, `Tokyo_POI`, `Giza_POI`, `NewYork_POI`, and `Sydney_POI`. Use the Move and Rotate tools so each marker stands perpendicular to the globe.
+
+### Step 5 — Enable VR Grab Interaction
+1. **Mark the globe as grabbable.** With `Globe` selected, click **Add Component ▸ Oculus ▸ Interaction ▸ OVRGrabbable**. Leave **Allow Offhand Grab** checked so either controller can grab the globe.
+2. **Configure the hand anchors as grabbers.**
+   - Expand `OVRCameraRig/TrackingSpace` in the Hierarchy.
+   - Select `LeftHandAnchor`, add an **OVRGrabber** component, and verify that the automatically created `Sphere Collider` (trigger) appears underneath.
+   - Repeat for `RightHandAnchor`. Ensure the grabber radius colliders do **not** intersect the globe at rest; adjust `Grab Volumes` if necessary.
+3. **Assign grab references.** For both `LeftHandAnchor` and `RightHandAnchor`, confirm that the newly added `Sphere Collider` is listed under **Grab Volumes**, and the **Parent Held Object** field remains empty (the grabber will populate this when the globe is grabbed at runtime).
+4. **Test in the editor.** Enter Play Mode. Use a gamepad, keyboard, or headset controllers to:
+   - Move the thumbstick/arrow keys and confirm the `GlobeRotator` script rotates the globe.
+   - Press the grip buttons on a controller to grab the globe via `OVRGrabber` + `OVRGrabbable`.
+   - Tap the Space bar to trigger `PhysicsGrabber` and observe the globe receiving a torque impulse (visible when `Is Kinematic` is unchecked for testing).
+
+## 2. Script Highlights (Start & Update Usage)
+The scripts included in `Assets/Scripts/` demonstrate essential Unity lifecycle methods.
+
+### GlobeRotator.cs
+* **`Start()`** caches the initial rotation for potential resets and logs the setup message.
+* **`Update()`** reads horizontal input each frame and rotates the globe with `Time.deltaTime` so rotation speed stays frame-rate independent.
+
+### POI_Interaction.cs
+* **`Start()`** captures the default scale of the marker.
+* **`Update()`** applies a pulsing multiplier using `Mathf.Sin`, making the POI gently expand and contract to attract attention.
+
+### PhysicsGrabber.cs
+* **`Update()`** listens for the Space key and then calls `Rigidbody.AddTorque` with a randomized direction, giving students an example of applying instantaneous physics forces.
+
+## 3. Verifying Your Work Without Screenshots
+Because this repository does not include captured images, use the Inspector readouts to verify setup:
+* Selecting `WorldController` should show only a Transform component, confirming it is an empty organizer object.
+* Selecting `Globe` should reveal (in order) `Transform`, `Sphere Collider`, `Rigidbody (Is Kinematic)`, `OVRGrabbable`, `GlobeRotator`, and `PhysicsGrabber` with the `Target Rigidbody` slot populated.
+* Each POI marker should list `Transform`, `Mesh Filter`, `Mesh Renderer`, and `POI_Interaction`. The child `POI_Label` should contain a TextMeshPro component with the location name.
+
+## 4. Repository Contents
+All scripts (`GlobeRotator.cs`, `POI_Interaction.cs`, and `PhysicsGrabber.cs`) and documentation live under `Assets/` so classmates can review both the code and the procedural walkthrough in source control.
 # 🌍 MetaGlobe VR: Project Summary
 
 This document serves as the combined report for scene structure, GameObject usage, prefabs, and fundamental C# scripting concepts.
